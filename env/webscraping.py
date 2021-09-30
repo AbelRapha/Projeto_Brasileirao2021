@@ -32,7 +32,7 @@ html_times = soup.find_all(attrs= {"class": "classificacao__equipes classificaca
 times = []
 for time in html_times:
   times.append(time.get_text())
-print(times)
+
 
 #estatisticas
 html_estatisticas = soup.find_all(attrs={'class': "classificacao__pontos"})
@@ -43,7 +43,43 @@ array_estatisticas = np.array_split(estatisticas, 20)
 estatisticas.clear()
 for array in array_estatisticas:
   estatisticas.append(list(array))
-print(estatisticas)
+#Acessando o site da ESPN
+
+url_espn = "https://www.espn.com.br/futebol/estatisticas/_/liga/bra.1"
+
+driver.get(url_espn)
+
+#Pegando os dados da tabela artilharia
+
+tabela_artilharia = driver.find_element_by_class_name('Table__TBODY')
+
+tabela_artilharia_html = tabela_artilharia.get_attribute('outerHTML')
+
+soup2 = BeautifulSoup(tabela_artilharia_html, 'html.parser')
+
+artilheiros = soup2.find_all(attrs={"class":"tar Table__TD"})
+dicionario_artilheiros = dict()
+#Pegando os nomes dos artilheiros
+nomes_dos_artilheiros = list()
+for i in range(1,60,5):
+  nomes_dos_artilheiros.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
+dicionario_artilheiros["Nome do Artilheiro"] = nomes_dos_artilheiros
+#pegando os times dos artilheiros
+times_dos_artilheiros = list()
+for i in range(2,48,5):
+  try:
+    times_dos_artilheiros.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
+  except AttributeError:
+    times_dos_artilheiros.append(("Sem time"))
+dicionario_artilheiros["Time dos artilheiros"] = times_dos_artilheiros
+#pegando os gols feitos pelo top 10 artilheiros
+qtd_gols_artilheiro = list()
+for i in range(1, 21, 2):
+  qtd_gols_artilheiro.append(soup2.find_all(attrs={"class":"tar Table__TD"}[i].span.get_text()))
+dicionario_artilheiros["qtd gols por artilheiro"] = qtd_gols_artilheiro
+
+
+print(dicionario_artilheiros)
 
 
 
