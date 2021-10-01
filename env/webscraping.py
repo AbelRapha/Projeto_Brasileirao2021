@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 import json
 import numpy as np
 
-url = "https://ge.globo.com/futebol/brasileirao-serie-a/"
+url = "https://www.espn.com.br/futebol/liga/_/nome/bra.1/brasileiro"
 
 
 option = Options()
@@ -20,30 +20,62 @@ driver.get(url)
 
 time.sleep(5)
 
-elemento = driver.find_element_by_class_name('classificacao__pontos-corridos')
+elemento = driver.find_element_by_class_name('content')
 
-html__do_elemento = elemento.get_attribute("outerHTML")
+html__da_tabela= elemento.get_attribute("outerHTML")
 
 # Utilizando o BeaultifulSoup
-soup = BeautifulSoup(html__do_elemento, 'html.parser')
+soup = BeautifulSoup(html__da_tabela, 'html.parser')
 
+dicionario_campeonato = dict()
 #times
-html_times = soup.find_all(attrs= {"class": "classificacao__equipes classificacao__equipes--sigla"})
-times = []
-for time in html_times:
-  times.append(time.get_text())
+tabela_campeonato = soup.find_all(attrs={"class": "mod-data"})
+tabela_campeonato= tabela_campeonato[0]
+times = tabela_campeonato.find_all("tr")
+lista_times = list()
+for i in range(1,len(times),1):
+  lista_times.append(times[i].a.get_text())
+dicionario_campeonato['Times'] =  lista_times
+#Quantidade de Pontos:
+qtd_pts = list()
+tabela_campeonato = soup.find_all(attrs={"class": "mod-data"})
+tabela_campeonato= tabela_campeonato[0].find_all(attrs = {"class": "right"})
+for i in range(11,126,6):
+  qtd_pts.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['QTD Pontos'] = qtd_pts
+
+#Quantidade de Jogos:
+qtd_jogos = list()
+for i in range(6,126,6):
+  qtd_jogos.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['QTD Jogos'] =  qtd_jogos
+
+#Quantidade de Vitorias
+qtd_vitorias = list()
+for i in range(7,126,6):
+  qtd_vitorias.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['QTD Vitorias'] = qtd_vitorias
+
+#Quantidade de empates
+qtd_empates = list()
+for i in range(8,126,6):
+  qtd_empates.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['QTD Empates'] =  qtd_empates
+
+#Quantidade Derrotas
+qtd_derrotas = list()
+for i in range(9,126,6):
+  qtd_derrotas.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['QTD Derrotas'] =  qtd_derrotas
+
+#Saldo de Gols:
+qtd_sg = list()
+for i in range(10,126,6):
+  qtd_sg.append(tabela_campeonato[i].get_text())
+dicionario_campeonato['SALDO DE GOLS'] = qtd_sg
 
 
-#estatisticas
-html_estatisticas = soup.find_all(attrs={'class': "classificacao__pontos"})
-estatisticas = []
-for estatistica in html_estatisticas:
-  estatisticas.append(estatistica.get_text())
-array_estatisticas = np.array_split(estatisticas, 20)
-estatisticas.clear()
-for array in array_estatisticas:
-  estatisticas.append(list(array))
-#Acessando o site da ESPN
+#Acessando o site da ESPN Seção de estatísticas
 
 url_espn = "https://www.espn.com.br/futebol/estatisticas/_/liga/bra.1"
 
@@ -58,32 +90,30 @@ tabela_artilharia_html = tabela_artilharia.get_attribute('outerHTML')
 soup2 = BeautifulSoup(tabela_artilharia_html, 'html.parser')
 
 artilheiros = soup2.find_all(attrs={"class":"tar Table__TD"})
-dicionario_artilheiros = dict()
+
 #Pegando os nomes dos artilheiros
-nomes_dos_artilheiros = list()
+nomes_dos_campeonato = list()
 for i in range(1,60,5):
-  nomes_dos_artilheiros.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
-dicionario_artilheiros["Nome do Artilheiro"] = nomes_dos_artilheiros
+  nomes_dos_campeonato.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
+dicionario_campeonato["Nome do Artilheiro"] = nomes_dos_campeonato
 #pegando os times dos artilheiros
-times_dos_artilheiros = list()
+times_dos_campeonato = list()
 for i in range(2,48,5):
   try:
-    times_dos_artilheiros.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
+    times_dos_campeonato.append(soup2.find_all(attrs={"class":"Table__TD"})[i].a.get_text())
   except AttributeError:
-    times_dos_artilheiros.append(("Sem time"))
-dicionario_artilheiros["Time dos artilheiros"] = times_dos_artilheiros
-#pegando os gols feitos pelo top 10 artilheiros
+    times_dos_campeonato.append(("Sem time"))
+dicionario_campeonato["Time dos campeonato"] = times_dos_campeonato
+#pegando os gols feitos pelo top 10 campeonato
 qtd_gols_artilheiro = list()
-for i in range(1, 21, 2):
-  qtd_gols_artilheiro.append(soup2.find_all(attrs={"class":"tar Table__TD"}[i].span.get_text()))
-dicionario_artilheiros["qtd gols por artilheiro"] = qtd_gols_artilheiro
-
-
-print(dicionario_artilheiros)
 
 
 
- #estruturando conteudo em um Dat Frame- Pandas
+print(dicionario_campeonato)
+
+
+
+ #estruturando conteudo em um Data Frame- Pandas
 
 
 driver.close()
